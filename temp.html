@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="ar-EG" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5ECE0">
+<meta name="color-scheme" content="light">
+<title>جواب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Readex+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<script>
+
+/* ==========================================================================
+   CONFIG — كل النصوص والإعدادات هنا. عدّل هنا بس، ومتلمسش باقي الكود.
+   {her} و {him} بيتبدلوا تلقائيًا بالأسماء.
+   ========================================================================== */
+
+const CONFIG = {
+  names: { her: "أميرة", him: "أحمد" },
+
+  // [خصّص] رقمك بصيغة دولية من غير + ومن غير مسافات. مثال: 2010xxxxxxxx
+  // لو سبته فاضي، زرار «خلينا نتكلم؟» بيتحول لـ «انسخي الرسالة».
+  whatsappNumber: "",
+
+  // الرسالة اللي هتظهر جاهزة في واتساب (أو تتنسخ). هي تقدر تعدّلها قبل ما تبعت.
+  whatsappMessage: "{him}، قريت الجواب. تعالى نتكلم.", // TODO: خصّص
+
+  screens: {
+    intro: {
+      eyebrow: "بريد خاص",
+      title: "كتبتلك جواب. بختم شمع كمان.",                                      // TODO: خصّص
+      subtitle: "كان ممكن أبعت رسالة وخلاص، بس اللي عايز أقوله يستاهل ورق. افتحيه على مهلك.", // TODO: خصّص
+      address: "إلى {her}",
+      sealLabel: "اكسري الختم وافتحي الجواب",
+      hint: "اضغطي على الختم",
+      reopen: "ارجعي للورق",
+    },
+    notes: {
+      eyebrow: "قبل ما تقري",
+      title: "قبل الكلام المهم",
+      subtitle: "تلات ورقات صغيرة. وعدت نفسي ماكتبش أكتر من تلات سطور في كل واحدة، وكان صعب.", // TODO: خصّص
+      openHint: "اضغطي تفتحيها",
+      seenHint: "اتقرت، تقدري تفتحيها تاني",
+      // نص العدّاد حسب عدد الورقات المفتوحة (٠، ١، ٢، ٣)
+      progress: ["لسه ولا ورقة اتفتحت", "فتحتي واحدة من تلاتة", "فتحتي اتنين من تلاتة", "فتحتي التلاتة"],
+      // نص الزرار وهو «مقفول بلطف» حسب عدد الورقات الفاضلة (٠، ١، ٢، ٣)
+      locked: ["", "فاضل ورقة واحدة", "فاضل ورقتين", "فاضل تلات ورقات"],
+      ready: "يلا نقرأ الجواب",
+      nudge: "فيه ورقة لسه مقفولة. ولو حابة تعدّي، الزرار اللي تحت موجود.",
+      skip: "أكمّل من غير ما أفتحهم كلهم",
+    },
+    letter: {
+      eyebrow: "الجواب",
+      salutation: "{her}،",
+      closing: "بحبك،",
+      talk: "خلينا نتكلم؟",
+      copy: "انسخي الرسالة",
+      copied: "اتنسخت",
+      time: "محتاجة وقت؟ خدي وقتك",
+      talkReply: "واتساب هيفتح والرسالة جاهزة. عدّلي فيها براحتك قبل ما تبعتي.",
+      copyReply: "الرسالة معاكي. ابعتيها بس لما تحسي إنك عايزة، وغيّري فيها براحتك.",
+      copyFail: "ماعرفتش أنسخها لوحدي، دي هي لو حبيتي تنسخيها:",
+      timeReply: "ولا يهمك. أنا مستني وقت ما تحبي، ومن غير زنّ.",
+    },
+  },
+
+  // التلات ورقات. label = العنوان على الورقة، text = اللي جوه (٣ سطور بالكتير)
+  items: [
+    {
+      label: "حاجة بحبها فيكي",
+      // TODO: خصّص — [حاجة حقيقية بتحبها فيها، تفصيلة صغيرة أحسن من جملة كبيرة]
+      text: "ضحكتك لما تيجي فجأة في نص الكلام، قبل ما تلحقي تمسكيها.",
+    },
+    {
+      label: "حاجة فاكرها",
+      // TODO: خصّص — [ذكرى حقيقية بينا في سطر]. النص ده عام عن قصد، بدّله بذكرى بجد.
+      text: "أول مرة حسيت إن الكلام معاكي مش محتاج تحضير. لسه فاكر الإحساس ده كويس.",
+    },
+    {
+      label: "مكانك عندي",
+      // TODO: خصّص
+      text: "إنتِ أول حد بفكر أحكيله لما يحصل أي حاجة، حلوة أو وحشة. ودي حاجة مابتتغيرش لما نكون زعلانين.",
+    },
+  ],
+
+  // الاعتذار — فقرات قصيرة بتظهر واحدة ورا التانية. خليه أقل من ٩٠ كلمة.
+  apology: [
+    "أنا زعّلتك، ومش هقول إنك فهمتيني غلط. اللي حصل ماكانش ينفع، وأنا اللي عملته.",
+    // TODO: خصّص — [سطر بيسمّي اللي حصل بالظبط، من غير تبرير]
+    "وكان المفروض آخد بالي قبل ما الموضوع يوصل للنقطة دي.",
+    "مش عايزك تعدّي الموضوع عشان خاطري. عايزك تعرفي إني فاهم إنتِ زعلانة ليه.",
+    // TODO: خصّص — التزام صغير ومحدد تقدر تنفذه فعلًا
+    "ومن هنا ورايح، لما حاجة تضايقك هسمعك للآخر قبل ما أرد، حتى لو عندي كلام كتير.",
+    "ولما تكوني عايزة نتكلم، أنا موجود.",
+  ],
+};
+</script>
+
+<style>
+/* ========================================================================
+   Design tokens
+   ======================================================================== */
+:root{
+  /* palette */
+  --paper:#F5ECE0;
+  --paper-2:#EEE1CF;
+  --cream:#FBF5EC;
+  --blush:#EBCFC5;
+  --wine:#7A2233;
+  --wine-deep:#561523;
+  --gold:#B48A4E;
+  --gold-ink:#7A5B28;
+  --ink:#3A2622;
+  --ink-soft:#6A5049;
+  --hair:rgba(122,34,51,.14);
+  --hair-strong:rgba(122,34,51,.30);
+
+  /* spacing scale */
+  --s-1:.25rem; --s-2:.5rem; --s-3:.75rem; --s-4:1rem;
+  --s-5:1.5rem; --s-6:2rem; --s-7:3rem; --s-8:4.5rem;
+
+  /* radius */
+  --r-sm:4px; --r-md:12px; --r-lg:18px; --r-pill:999px;
+
+  /* layered shadows, warm-tinted */
+  --sh-paper:
+    0 1px 0 rgba(255,251,244,.85) inset,
+    0 1px 1px rgba(86,40,30,.06),
+    0 4px 10px -4px rgba(86,40,30,.12),
+    0 22px 40px -22px rgba(86,40,30,.30);
+  --sh-lift:
+    0 1px 0 rgba(255,251,244,.85) inset,
+    0 2px 3px rgba(86,40,30,.07),
+    0 12px 22px -10px rgba(86,40,30,.18),
+    0 40px 70px -34px rgba(86,40,30,.38);
+  --sh-wax:
+    inset 0 1px 0 rgba(255,214,214,.35),
+    inset 0 -3px 6px rgba(40,5,12,.35),
+    0 2px 3px rgba(60,10,20,.22),
+    0 10px 22px -8px rgba(86,21,35,.50);
+
+  /* motion */
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-io:cubic-bezier(.65,0,.35,1);
+  --ease-back:cubic-bezier(.34,1.45,.64,1);
+  --d-1:250ms; --d-2:400ms; --d-3:550ms; --d-4:700ms;
+
+  /* type */
+  --f-display:"Aref Ruqaa","Amiri","Traditional Arabic","Times New Roman",serif;
+  --f-body:"Readex Pro","IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;
+  --fs-sm:1rem;
+  --fs-base:clamp(1.0625rem, 1rem + .3vw, 1.1875rem);
+  --fs-md:clamp(1.1875rem, 1.06rem + .55vw, 1.375rem);
+  --fs-lg:clamp(1.75rem, 1.4rem + 1.6vw, 2.4rem);
+  --fs-xl:clamp(2.15rem, 1.55rem + 3vw, 3.5rem);
+  --lh-body:1.85;
+}
+
+/* ========================================================================
+   Base
+   ======================================================================== */
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%;background:var(--paper)}
+body{
+  margin:0;
+  font-family:var(--f-body);
+  font-size:var(--fs-base);
+  line-height:var(--lh-body);
+  color:var(--ink);
+  background:
+    radial-gradient(110% 65% at 88% -12%, rgba(235,207,197,.85), transparent 62%),
+    radial-gradient(90% 55% at 0% 112%, rgba(180,138,78,.22), transparent 60%),
+    linear-gradient(180deg,#F7EFE4 0%,#F2E6D6 100%);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+/* paper grain */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+  opacity:.22;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .22  0 0 0 0 .16  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--wine);outline-offset:4px;border-radius:var(--r-sm)}
+.sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+#sky{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+/* ========================================================================
+   Screens
+   ======================================================================== */
+.screen{
+  position:fixed;inset:0;z-index:1;
+  display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;
+  padding-block:max(var(--s-5), env(safe-area-inset-top)) max(var(--s-6), env(safe-area-inset-bottom));
+  padding-left:max(var(--s-4), env(safe-area-inset-left));
+  padding-right:max(var(--s-4), env(safe-area-inset-right));
+  visibility:hidden;
+}
+.screen.is-active,.screen.is-leaving{visibility:visible}
+.screen.is-active{z-index:2}
+.stage{margin-block:auto;width:100%;margin-inline:auto;position:relative}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:.75em;
+  font-size:var(--fs-sm);font-weight:500;color:var(--gold-ink);margin:0;
+}
+.eyebrow::before,.eyebrow::after{content:"";inline-size:1.75rem;block-size:1px;background:linear-gradient(90deg,transparent,var(--gold))}
+.eyebrow::after{background:linear-gradient(90deg,var(--gold),transparent)}
+
+.display{font-family:var(--f-display);font-weight:700;color:var(--wine);margin:0;line-height:1.35;text-wrap:balance}
+.lede{color:var(--ink-soft);margin:0;max-inline-size:27em;text-wrap:pretty}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);margin-block-end:var(--s-4)}
+.back{
+  display:inline-flex;align-items:center;gap:.4em;min-block-size:48px;min-inline-size:48px;
+  padding-inline:var(--s-2) var(--s-3);margin-inline-start:calc(var(--s-2) * -1);
+  background:none;border:0;border-radius:var(--r-pill);cursor:pointer;
+  color:var(--ink-soft);font-size:var(--fs-sm);
+  transition:color var(--d-1) var(--ease-out),background-color var(--d-1) var(--ease-out),transform var(--d-1) var(--ease-out);
+}
+.back svg{inline-size:20px;block-size:20px;transition:transform var(--d-2) var(--ease-out)}
+.back:hover{color:var(--wine);background:rgba(122,34,51,.06)}
+.back:hover svg{transform:translateX(3px)}
+.back:active{transform:scale(.96)}
+
+/* buttons */
+.btn{
+  position:relative;isolation:isolate;
+  display:inline-flex;align-items:center;justify-content:center;gap:.6em;
+  min-block-size:54px;padding-inline:var(--s-6);
+  border:0;border-radius:var(--r-pill);cursor:pointer;
+  font-weight:500;font-size:var(--fs-base);line-height:1.2;text-decoration:none;
+  -webkit-user-select:none;user-select:none;
+  transition:transform var(--d-1) var(--ease-out),box-shadow var(--d-2) var(--ease-out),background-color var(--d-2) var(--ease-out),color var(--d-2) var(--ease-out);
+}
+.btn--wax{
+  color:#FBF1E9;
+  background:radial-gradient(130% 150% at 30% 15%,#9C3347 0%,var(--wine) 45%,var(--wine-deep) 100%);
+  box-shadow:var(--sh-wax);
+}
+.btn--wax::after{
+  content:"";position:absolute;inset:3px;border-radius:inherit;pointer-events:none;
+  border:1px solid rgba(222,186,128,.5);transition:opacity var(--d-2) var(--ease-out);
+}
+.btn--wax svg{inline-size:18px;block-size:18px;transition:transform var(--d-2) var(--ease-out)}
+@media (hover:hover){
+  .btn--wax:hover{transform:translateY(-2px)}
+  .btn--wax:hover svg{transform:translateX(-4px)}
+}
+.btn--wax:active{transform:translateY(1px) scale(.98)}
+.btn--wax[aria-disabled="true"]{
+  color:var(--ink-soft);background:rgba(251,245,236,.55);
+  box-shadow:inset 0 0 0 1px var(--hair);
+}
+.btn--wax[aria-disabled="true"]::after{border:1px dashed var(--hair-strong);inset:0}
+.btn--wax[aria-disabled="true"] svg{opacity:.5}
+@media (hover:hover){.btn--wax[aria-disabled="true"]:hover{transform:none;background:rgba(251,245,236,.85)}}
+
+.link{
+  display:inline-flex;align-items:center;min-block-size:48px;padding-inline:var(--s-3);
+  background:none;border:0;cursor:pointer;border-radius:var(--r-sm);
+  color:var(--wine);font-size:var(--fs-sm);
+  text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.45em;
+  text-decoration-color:var(--hair-strong);
+  transition:text-decoration-color var(--d-2) var(--ease-out),opacity var(--d-2);
+}
+.link:hover{text-decoration-color:var(--wine)}
+
+/* ========================================================================
+   Screen 1 — the envelope
+   ======================================================================== */
+.intro{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-4);max-inline-size:36rem}
+.intro__text{display:flex;flex-direction:column;align-items:center;gap:var(--s-3)}
+.intro .display{font-size:var(--fs-xl)}
+.intro__foot{min-block-size:56px;display:flex;align-items:center;justify-content:center}
+
+.env{
+  --w:min(84vw, 26rem, 44dvh * 1.48);
+  position:relative;inline-size:var(--w);aspect-ratio:400/270;
+  margin-block:calc(var(--w) * .26) var(--s-3);
+  perspective:1400px;
+}
+.env::before{ /* contact shadow */
+  content:"";position:absolute;inset-inline:4%;inset-block-end:-9%;block-size:18%;
+  background:radial-gradient(closest-side,rgba(86,40,30,.26),transparent);
+}
+.env__back{
+  position:absolute;inset:0;border-radius:var(--r-md);
+  background:linear-gradient(180deg,#DAC1A3 0%,#E6D2B9 60%);
+  box-shadow:var(--sh-paper),inset 0 12px 18px -10px rgba(86,40,30,.25);
+}
+.env__letter{
+  position:absolute;inset-inline:6%;inset-block-start:5%;block-size:88%;z-index:2;
+  border-radius:var(--r-sm);padding:7% 8%;
+  background:linear-gradient(180deg,var(--cream),#F7EEE2);
+  box-shadow:0 1px 2px rgba(86,40,30,.10),0 -8px 16px -10px rgba(86,40,30,.22);
+  display:flex;flex-direction:column;gap:7%;
+}
+.env__letter b{font-family:var(--f-display);font-weight:700;color:var(--wine);font-size:clamp(1.1rem,4.4vw,1.5rem);line-height:1}
+.env__letter i{display:block;block-size:2px;border-radius:2px;background:rgba(122,34,51,.12)}
+.env__letter i:nth-of-type(2){inline-size:86%}
+.env__letter i:nth-of-type(3){inline-size:64%}
+.env__front{position:absolute;inset:0;inline-size:100%;block-size:100%;z-index:3;overflow:visible}
+.env__addr{
+  position:absolute;z-index:4;inset-inline:0;inset-block-end:5.5%;text-align:center;
+  font-family:var(--f-display);font-size:clamp(1.15rem,4.2vw,1.45rem);color:var(--wine);line-height:1;
+}
+.env__flap{
+  position:absolute;inset-inline:0;inset-block-start:0;block-size:63.7%;z-index:5;
+  transform-origin:50% 0;
+}
+.env__flap svg{inline-size:100%;block-size:100%;display:block;overflow:visible;filter:drop-shadow(0 3px 3px rgba(86,40,30,.16))}
+.env.is-open .env__flap{transform:rotateX(180deg);z-index:1}
+.env.is-open .env__letter{transform:translateY(-38%)}
+.env.is-open .seal{visibility:hidden}
+
+.seal{
+  position:absolute;z-index:6;left:50%;top:61.5%;translate:-50% -50%;
+  inline-size:clamp(4.5rem,21%,5.75rem);aspect-ratio:1;
+  padding:0;border:0;background:none;border-radius:50%;cursor:pointer;
+  filter:drop-shadow(0 6px 8px rgba(86,21,35,.32)) drop-shadow(0 1px 1px rgba(60,10,20,.3));
+}
+.seal::before{
+  content:"";position:absolute;inset:-10%;border-radius:50%;
+  border:1.5px solid rgba(122,34,51,.38);opacity:0;
+}
+.s1.is-active .seal::before{animation:ring 2.8s var(--ease-out) infinite}
+@keyframes ring{0%{transform:scale(.88);opacity:0}25%{opacity:.9}100%{transform:scale(1.3);opacity:0}}
+.seal__body{position:absolute;inset:0;transition:transform var(--d-2) var(--ease-back)}
+@media (hover:hover){.seal:hover .seal__body{transform:translateY(-3px) scale(1.04) rotate(-3deg)}}
+.seal:active .seal__body{transform:scale(.94)}
+.seal.is-breaking::before{display:none}
+.seal:focus-visible{outline-offset:8px;border-radius:50%}
+.seal__half,.seal__crack{position:absolute;inset:0;inline-size:100%;block-size:100%}
+.seal__half--r{clip-path:polygon(52% 0,100% 0,100% 100%,53% 100%,48% 84%,54% 68%,46% 52%,55% 34%,47% 18%)}
+.seal__half--l{clip-path:polygon(0 0,52% 0,47% 18%,55% 34%,46% 52%,54% 68%,48% 84%,53% 100%,0 100%)}
+.seal__crack{opacity:0;pointer-events:none}
+.crumbs{position:absolute;left:50%;top:61.5%;z-index:7;pointer-events:none}
+.crumbs span{position:absolute;inline-size:7px;block-size:6px;border-radius:40% 60% 55% 45%;background:var(--wine);margin:-3px}
+
+.hint{display:inline-flex;align-items:center;gap:.5em;color:var(--ink-soft);font-size:var(--fs-sm)}
+.hint svg{inline-size:18px;block-size:18px;color:var(--wine);animation:nudge 2.2s var(--ease-io) infinite}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* ========================================================================
+   Screen 2 — the three notes
+   ======================================================================== */
+.s2 .stage{max-inline-size:34rem}
+.s2__head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s-3)}
+.s2__head .display{font-size:var(--fs-lg)}
+
+.notes{list-style:none;margin:var(--s-6) 0 var(--s-6);padding:0;display:flex;flex-direction:column;gap:var(--s-5)}
+.note{
+  position:relative;perspective:1100px;
+  transform:rotate(var(--tilt));
+  transition:transform var(--d-3) var(--ease-out);
+}
+.note--1{--tilt:-1.1deg;align-self:flex-start;inline-size:95%}
+.note--2{--tilt:1deg;align-self:flex-end;inline-size:95%}
+.note--3{--tilt:-.5deg;align-self:center;inline-size:97%}
+@media (hover:hover){.note:hover{transform:rotate(0deg) translateY(-3px)}}
+.note:has(.note__hit:active){transform:rotate(0deg) scale(.985)}
+
+.note__hit{
+  position:absolute;inset:0;z-index:4;inline-size:100%;
+  border:0;background:transparent;cursor:pointer;border-radius:var(--r-md);
+}
+.note__hit:focus-visible{outline-offset:6px;border-radius:var(--r-md)}
+.note__card{display:grid;transform-style:preserve-3d;transition:transform var(--d-4) var(--ease-out)}
+.note__face{
+  grid-area:1/1;position:relative;
+  -webkit-backface-visibility:hidden;backface-visibility:hidden;
+  min-block-size:9.25rem;border-radius:var(--r-md);
+  padding:var(--s-5);padding-inline-end:5.75rem;
+  display:flex;flex-direction:column;justify-content:center;gap:var(--s-1);
+  box-shadow:var(--sh-paper),0 0 0 1px var(--hair);
+}
+.note__num{
+  display:inline-grid;place-items:center;inline-size:2.1rem;block-size:2.1rem;border-radius:50%;
+  font-family:var(--f-display);font-size:1.15rem;line-height:1;color:var(--wine);
+  box-shadow:inset 0 0 0 1px rgba(180,138,78,.7);
+  margin-block-end:var(--s-1);
+  transition:background-color var(--d-3) var(--ease-out),color var(--d-3) var(--ease-out),box-shadow var(--d-3);
+}
+.note.is-seen .note__num{color:#FBF1E9;background:radial-gradient(circle at 35% 30%,#A43A4E,var(--wine) 60%,var(--wine-deep));box-shadow:var(--sh-wax)}
+.note__title{font-family:var(--f-display);font-weight:700;font-size:clamp(1.5rem,1.35rem + .6vw,1.8rem);color:var(--wine);line-height:1.45}
+.note__hint{font-size:var(--fs-sm);color:var(--ink-soft);line-height:1.5}
+.note__art{position:absolute;inset-inline-end:var(--s-4);top:50%;translate:0 -50%;block-size:78%;inline-size:auto;pointer-events:none}
+.note__label{font-size:var(--fs-sm);font-weight:500;color:var(--gold-ink);line-height:1.5}
+.note__text{margin:0;font-size:var(--fs-base);line-height:1.8;color:var(--ink);text-wrap:pretty}
+.note__back{padding-inline-end:var(--s-6)}
+.note__turn{position:absolute;inset-inline-end:var(--s-3);inset-block-start:var(--s-3);inline-size:18px;block-size:18px;color:var(--ink-soft);opacity:.7}
+
+/* 1 — pressed flower card: flips sideways */
+.note--1 .note__face{background:linear-gradient(160deg,#FCF7EF,#F3E8D9)}
+.note--1 .note__back{transform:rotateY(180deg)}
+.note--1.is-open .note__card{transform:rotateY(-180deg)}
+
+/* 2 — ticket stub: flips vertically */
+.note--2{filter:drop-shadow(0 10px 14px rgba(86,40,30,.14))}
+.note--2 .note__face{
+  background:linear-gradient(160deg,#F6E3DA,#EED3C8);box-shadow:none;
+  -webkit-mask:radial-gradient(circle at 0 50%,#0000 11px,#000 11.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,#0000 11px,#000 11.5px) right/51% 100% no-repeat;
+          mask:radial-gradient(circle at 0 50%,#0000 11px,#000 11.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,#0000 11px,#000 11.5px) right/51% 100% no-repeat;
+}
+.note--2 .note__front::after{
+  content:"";position:absolute;inset-block:14%;inset-inline-end:5.25rem;
+  border-inline-start:1.5px dashed rgba(122,34,51,.28);
+}
+.note--2 .note__back{transform:rotateX(180deg)}
+.note--2.is-open .note__card{transform:rotateX(180deg)}
+
+/* 3 — sealed kraft note: the cover folds up */
+.note--3 .note__front{
+  background:
+    linear-gradient(135deg,transparent 0 calc(100% - 2.2rem),rgba(122,80,40,.14) calc(100% - 2.2rem) calc(100% - 2.1rem),#F0E0C3 calc(100% - 2.1rem)),
+    linear-gradient(165deg,#EBD8B6,#E1C9A1);
+  transform-origin:50% 0;transform:translateZ(1px);
+  transition:transform var(--d-4) var(--ease-out);
+}
+.note--3 .note__front .note__hint{color:var(--ink)}
+.note--3 .note__back{
+  background:
+    repeating-linear-gradient(180deg,transparent 0 1.85em,rgba(122,34,51,.07) 1.85em calc(1.85em + 1px)),
+    linear-gradient(180deg,var(--cream),#F6EDE0);
+}
+.note--3.is-open .note__front{transform:rotateX(-180deg) translateZ(1px)}
+
+/* progress + next */
+.s2__foot{display:flex;flex-direction:column;align-items:center;gap:var(--s-3);padding-block-start:var(--s-5);border-block-start:1px solid var(--hair)}
+.progress{display:flex;align-items:center;gap:var(--s-3);color:var(--ink-soft);font-size:var(--fs-sm);margin:0}
+.dots{display:flex;gap:7px}
+.dot{position:relative;inline-size:12px;block-size:12px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--hair-strong)}
+.dot::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#A43A4E,var(--wine) 60%,var(--wine-deep));
+  transform:scale(0);transition:transform var(--d-3) var(--ease-back);
+}
+.dot.is-on::after{transform:scale(1)}
+.count{font-family:var(--f-display);font-size:1.15rem;color:var(--wine);line-height:1}
+.s2__foot .btn{min-inline-size:min(100%,18rem)}
+
+@media (min-width:56rem){
+  .s2 .stage{max-inline-size:54rem}
+  .notes{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-5) var(--s-6);margin-block:var(--s-6)}
+  .note--1,.note--2{inline-size:100%}
+  .note--2{margin-block-start:var(--s-6)}
+  .note--3{grid-column:1/-1;justify-self:center;inline-size:min(100%,28rem);margin-block-start:calc(var(--s-3) * -1)}
+  .s2__foot{max-inline-size:34rem;margin-inline:auto}
+}
+@media (min-width:56rem) and (max-height:56rem){
+  .notes{margin-block:var(--s-5) var(--s-4)}
+  .note--2{margin-block-start:var(--s-5)}
+  .note__face{min-block-size:8.25rem}
+  .s2__foot{padding-block-start:var(--s-4);gap:var(--s-2)}
+  .topbar{margin-block-end:0}
+}
+
+/* ========================================================================
+   Screen 3 — the letter
+   ======================================================================== */
+.s3 .stage{max-inline-size:40rem}
+.sheet{
+  position:relative;isolation:isolate;
+  background:linear-gradient(180deg,var(--cream),#F8EFE3);
+  border-radius:var(--r-sm);box-shadow:var(--sh-lift);
+  padding:var(--s-6) var(--s-5) var(--s-6);
+}
+.sheet::before{
+  content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;
+  background:var(--paper-2);box-shadow:var(--sh-paper);
+  transform:rotate(-1.8deg) translateY(8px);
+}
+.sheet::after{ /* margin rule */
+  content:"";position:absolute;inset-block:var(--s-5);inset-inline-start:var(--s-3);
+  inline-size:1px;background:linear-gradient(180deg,transparent,rgba(122,34,51,.16) 12%,rgba(122,34,51,.16) 88%,transparent);
+}
+@media (min-width:40rem){.sheet{padding:var(--s-7) var(--s-7) var(--s-6)}.sheet::after{inset-inline-start:var(--s-5)}}
+.salute{font-size:var(--fs-xl);margin-block-end:var(--s-4)}
+.letter-body p{margin:0 0 var(--s-4);font-size:var(--fs-md);line-height:1.95;text-wrap:pretty}
+.sign{display:flex;flex-direction:column;align-items:flex-end;margin-block-start:var(--s-5)}
+.sign__close{color:var(--ink-soft);font-size:var(--fs-base);line-height:1.4}
+.sign__name{font-family:var(--f-display);font-weight:700;font-size:var(--fs-lg);color:var(--wine);line-height:1.5}
+.sign svg{inline-size:7.5rem;block-size:1.25rem;margin-block-start:-.25rem}
+.sign svg path{stroke-dasharray:160;stroke-dashoffset:0}
+
+.choices{display:grid;grid-template-columns:1fr;gap:var(--s-3);margin-block-start:var(--s-6)}
+@media (min-width:44rem){.choices{grid-template-columns:1fr 1fr}}
+.choice{
+  display:flex;align-items:center;justify-content:center;gap:.6em;
+  min-block-size:60px;padding:var(--s-3);
+  border:0;border-radius:var(--r-md);cursor:pointer;text-decoration:none;text-align:center;
+  font-weight:500;font-size:var(--fs-base);line-height:1.4;color:var(--wine);
+  background:linear-gradient(180deg,#FCF7F0,#F2E6D6);
+  box-shadow:0 0 0 1px var(--hair-strong),var(--sh-paper);
+  transition:transform var(--d-1) var(--ease-out),box-shadow var(--d-2) var(--ease-out),background-color var(--d-2);
+}
+.choice svg{inline-size:20px;block-size:20px;flex:none;transition:transform var(--d-2) var(--ease-back)}
+@media (hover:hover){
+  .choice:hover{transform:translateY(-2px);box-shadow:0 0 0 1px var(--wine),var(--sh-lift)}
+  .choice:hover svg{transform:scale(1.12) rotate(-6deg)}
+}
+.choice:active{transform:translateY(1px) scale(.98)}
+.choice[data-done="true"]{color:#FBF1E9;background:radial-gradient(130% 150% at 30% 15%,#9C3347,var(--wine) 45%,var(--wine-deep));box-shadow:var(--sh-wax)}
+
+.reply{
+  display:flex;gap:var(--s-3);align-items:flex-start;
+  margin-block-start:var(--s-4);padding:var(--s-4) var(--s-5);
+  border-radius:var(--r-md);background:rgba(235,207,197,.42);box-shadow:inset 0 0 0 1px var(--hair);
+}
+.reply[hidden]{display:none}
+.reply svg{inline-size:22px;block-size:22px;flex:none;margin-block-start:.3em;color:var(--wine)}
+.reply p{margin:0;line-height:1.8}
+.reply q{display:block;margin-block-start:var(--s-2);font-family:var(--f-display);color:var(--wine);quotes:"«" "»"}
+
+/* ========================================================================
+   Reduced motion: everything just appears
+   ======================================================================== */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .seal::before{display:none}
+}
+</style>
+</head>
+
+<body>
+<!-- shared SVG defs -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <radialGradient id="gWax" cx="36%" cy="30%" r="78%">
+      <stop offset="0" stop-color="#A93D52"/><stop offset=".55" stop-color="#7A2233"/><stop offset="1" stop-color="#4A111E"/>
+    </radialGradient>
+    <radialGradient id="gWaxIn" cx="50%" cy="42%" r="60%">
+      <stop offset="0" stop-color="#86293C"/><stop offset="1" stop-color="#5F1827"/>
+    </radialGradient>
+    <linearGradient id="gFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4E8D8"/><stop offset="1" stop-color="#EAD9C3"/>
+    </linearGradient>
+    <linearGradient id="gFlap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EFE0CC"/><stop offset="1" stop-color="#E4CFB5"/>
+    </linearGradient>
+    <!-- the wax seal; «أ» is the first letter of both names -->
+    <symbol id="seal-art" viewBox="0 0 100 100">
+      <path d="M50 3C61 2 70 8 78 13c10 6 17 16 18 28 2 12-1 22-6 31-6 11-16 19-28 22-12 4-24 3-34-3C17 85 8 75 5 63 2 51 4 39 10 28 16 18 26 10 37 6c4-2 8-3 13-3Z" fill="url(#gWax)"/>
+      <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,214,204,.32)" stroke-width="1.7" stroke-dasharray="0.1 4.6" stroke-linecap="round"/>
+      <circle cx="50" cy="50" r="30" fill="url(#gWaxIn)" stroke="rgba(30,4,10,.35)" stroke-width="1.2"/>
+      <circle cx="50.6" cy="50.9" r="30" fill="none" stroke="rgba(255,205,205,.22)" stroke-width="1"/>
+      <text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-family="Aref Ruqaa, Amiri, serif" font-weight="700" font-size="40" fill="rgba(36,4,12,.62)">أ</text>
+      <text x="49.3" y="51" text-anchor="middle" dominant-baseline="central" font-family="Aref Ruqaa, Amiri, serif" font-weight="700" font-size="40" fill="rgba(255,214,206,.62)">أ</text>
+    </symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M10 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-turn" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.1-5M5 4v4h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 18.5V7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v6a2.5 2.5 0 0 1-2.5 2.5H9l-4 2.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 10.5h6M9 13h3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 15.5V7a2 2 0 0 1 2-2h8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M18.5 14.5A7 7 0 0 1 9.5 5.5a7 7 0 1 0 9 9Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sprig" viewBox="0 0 24 24"><path d="M12 21c0-6 1-10 5-15M12 14c-3-1-5-3-6-6 3 0 5 2 6 6Zm1.5-4c2.5-.5 4.5.5 5.5 2.5-2.5.5-4.5-.5-5.5-2.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<p class="sr" id="live" aria-live="polite"></p>
+
+<main>
+  <!-- ============================== SCREEN 1 ============================== -->
+  <section class="screen s1" id="s1" aria-labelledby="s1-title">
+    <div class="stage intro" data-move>
+      <header class="intro__text" id="introText">
+        <p class="eyebrow" data-stagger data-t="intro.eyebrow"></p>
+        <h1 class="display" id="s1-title" tabindex="-1" data-stagger data-t="intro.title"></h1>
+        <p class="lede" data-stagger data-t="intro.subtitle"></p>
+      </header>
+
+      <div class="env" id="env" data-stagger>
+        <div class="env__back"></div>
+        <div class="env__letter" aria-hidden="true"><b data-t="letter.salutation"></b><i></i><i></i><i></i></div>
+        <svg class="env__front" viewBox="0 0 400 270" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 10 L186 150 Q200 160 214 150 L400 10 L400 258 Q400 270 388 270 L12 270 Q0 270 0 258 Z" fill="url(#gFront)"/>
+          <path d="M3 266 L170 146 M397 266 L230 146" stroke="rgba(122,34,51,.12)" stroke-width="1" fill="none" vector-effect="non-scaling-stroke"/>
+          <path d="M0 10 L186 150 Q200 160 214 150 L400 10" stroke="rgba(255,250,242,.95)" stroke-width="1.2" fill="none" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <div class="env__addr" aria-hidden="true" data-t="intro.address"></div>
+        <div class="env__flap">
+          <svg viewBox="0 0 400 172" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 8 Q0 0 10 0 L390 0 Q400 0 400 8 L214 163 Q200 173 186 163 Z" fill="url(#gFlap)" stroke="rgba(122,34,51,.16)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+          </svg>
+        </div>
+        <button class="seal" id="seal" type="button" data-t-label="intro.sealLabel">
+          <span class="seal__body">
+            <svg class="seal__half seal__half--l" viewBox="0 0 100 100" aria-hidden="true"><use href="#seal-art"/></svg>
+            <svg class="seal__half seal__half--r" viewBox="0 0 100 100" aria-hidden="true"><use href="#seal-art"/></svg>
+            <svg class="seal__crack" viewBox="0 0 100 100" aria-hidden="true">
+              <polyline points="52,3 47,18 55,34 46,52 54,68 48,84 53,97" fill="none" stroke="rgba(30,3,9,.75)" stroke-width="1.8" stroke-linejoin="round"/>
+              <polyline points="53,3 48,18 56,34 47,52 55,68 49,84 54,97" fill="none" stroke="rgba(255,200,200,.3)" stroke-width="1" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+        <div class="crumbs" id="crumbs" aria-hidden="true"></div>
+      </div>
+
+      <div class="intro__foot" data-stagger>
+        <p class="hint" id="sealHint"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 19V6M6.5 11 12 5.5 17.5 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-t="intro.hint"></span></p>
+        <button class="btn btn--wax" id="reopen" type="button" hidden><span data-t="intro.reopen"></span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== SCREEN 2 ============================== -->
+  <section class="screen s2" id="s2" aria-labelledby="s2-title">
+    <div class="stage" data-move>
+      <div class="topbar" data-stagger>
+        <button class="back" type="button" data-go="1"><svg aria-hidden="true"><use href="#i-back"/></svg>رجوع</button>
+        <p class="eyebrow" data-t="notes.eyebrow"></p>
+      </div>
+      <header class="s2__head">
+        <h2 class="display" id="s2-title" tabindex="-1" data-stagger data-t="notes.title"></h2>
+        <p class="lede" data-stagger data-t="notes.subtitle"></p>
+      </header>
+
+      <ul class="notes" id="notes">
+        <li class="note note--1" data-stagger>
+          <button class="note__hit" type="button" aria-expanded="false" aria-controls="note-0"><span class="sr" data-item="0" data-field="label"></span></button>
+          <div class="note__card">
+            <div class="note__face note__front" aria-hidden="true">
+              <span class="note__num">١</span>
+              <span class="note__title" data-item="0" data-field="label"></span>
+              <span class="note__hint"></span>
+              <svg class="note__art" viewBox="0 0 80 120">
+                <path d="M40 118C37 92 44 70 40 42" stroke="#8B6A3E" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M41 94c11-6 19-4 23-12-10-2-18 2-23 12Z" fill="#C9A878" opacity=".75"/>
+                <path d="M40 76c-12-4-20-2-24-10 10-2 18 2 24 10Z" fill="#C9A878" opacity=".75"/>
+                <g transform="translate(40 32)" fill="#E6BBAF" stroke="#7A2233" stroke-opacity=".35" stroke-width=".8">
+                  <ellipse rx="7" ry="13" cy="-11"/><ellipse rx="7" ry="13" cy="-11" transform="rotate(72)"/><ellipse rx="7" ry="13" cy="-11" transform="rotate(144)"/><ellipse rx="7" ry="13" cy="-11" transform="rotate(216)"/><ellipse rx="7" ry="13" cy="-11" transform="rotate(288)"/>
+                  <circle r="4.5" fill="#B48A4E" stroke="none"/>
+                </g>
+              </svg>
+            </div>
+            <div class="note__face note__back" id="note-0" aria-hidden="true">
+              <svg class="note__turn" aria-hidden="true"><use href="#i-turn"/></svg>
+              <span class="note__label" data-item="0" data-field="label"></span>
+              <p class="note__text" data-item="0" data-field="text"></p>
+            </div>
+          </div>
+        </li>
+
+        <li class="note note--2" data-stagger>
+          <button class="note__hit" type="button" aria-expanded="false" aria-controls="note-1"><span class="sr" data-item="1" data-field="label"></span></button>
+          <div class="note__card">
+            <div class="note__face note__front" aria-hidden="true">
+              <span class="note__num">٢</span>
+              <span class="note__title" data-item="1" data-field="label"></span>
+              <span class="note__hint"></span>
+              <svg class="note__art" viewBox="0 0 64 120" style="block-size:56%">
+                <circle cx="24" cy="60" r="17" fill="none" stroke="#7A2233" stroke-width="1.6"/>
+                <circle cx="40" cy="60" r="17" fill="none" stroke="#B48A4E" stroke-width="1.6"/>
+                <path d="M32 46a17 17 0 0 1 0 28a17 17 0 0 1 0-28Z" fill="#7A2233" opacity=".18"/>
+              </svg>
+            </div>
+            <div class="note__face note__back" id="note-1" aria-hidden="true">
+              <svg class="note__turn" aria-hidden="true"><use href="#i-turn"/></svg>
+              <span class="note__label" data-item="1" data-field="label"></span>
+              <p class="note__text" data-item="1" data-field="text"></p>
+            </div>
+          </div>
+        </li>
+
+        <li class="note note--3" data-stagger>
+          <button class="note__hit" type="button" aria-expanded="false" aria-controls="note-2"><span class="sr" data-item="2" data-field="label"></span></button>
+          <div class="note__card">
+            <div class="note__face note__front" aria-hidden="true">
+              <span class="note__num">٣</span>
+              <span class="note__title" data-item="2" data-field="label"></span>
+              <span class="note__hint"></span>
+              <svg class="note__art" viewBox="0 0 100 100" style="block-size:auto;inline-size:3.5rem;filter:drop-shadow(0 3px 4px rgba(86,21,35,.3))"><use href="#seal-art"/></svg>
+            </div>
+            <div class="note__face note__back" id="note-2" aria-hidden="true">
+              <svg class="note__turn" aria-hidden="true"><use href="#i-turn"/></svg>
+              <span class="note__label" data-item="2" data-field="label"></span>
+              <p class="note__text" data-item="2" data-field="text"></p>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <footer class="s2__foot" data-stagger>
+        <p class="progress" role="status">
+          <span class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+          <span class="count" aria-hidden="true" dir="ltr"><span id="countN">٠</span>/٣</span>
+          <span id="progressText"></span>
+        </p>
+        <button class="btn btn--wax" id="next" type="button" aria-disabled="true"><span id="nextLabel"></span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        <button class="link" id="skip" type="button" data-t="notes.skip"></button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ============================== SCREEN 3 ============================== -->
+  <section class="screen s3" id="s3" aria-labelledby="s3-title">
+    <div class="stage" data-move>
+      <div class="topbar" data-stagger>
+        <button class="back" type="button" data-go="2"><svg aria-hidden="true"><use href="#i-back"/></svg>رجوع</button>
+        <p class="eyebrow" data-t="letter.eyebrow"></p>
+      </div>
+      <article class="sheet" id="letter">
+        <h2 class="display salute" id="s3-title" tabindex="-1" data-t="letter.salutation"></h2>
+        <div class="letter-body" id="letterBody"></div>
+        <div class="sign" id="sign">
+          <span class="sign__close" data-t="letter.closing"></span>
+          <span class="sign__name" id="signName"></span>
+          <svg viewBox="0 0 120 20" aria-hidden="true"><path d="M116 8c-20 6-44 9-66 7-14-1-28-4-46-1" fill="none" stroke="#B48A4E" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+
+        <div class="choices" id="choices">
+          <a class="choice" id="talkLink" target="_blank" rel="noopener" hidden><svg aria-hidden="true"><use href="#i-chat"/></svg><span data-t="letter.talk"></span></a>
+          <button class="choice" id="talkCopy" type="button" hidden><svg aria-hidden="true"><use href="#i-copy"/></svg><span id="copyLabel" data-t="letter.copy"></span></button>
+          <button class="choice" id="timeBtn" type="button"><svg aria-hidden="true"><use href="#i-moon"/></svg><span data-t="letter.time"></span></button>
+        </div>
+        <div class="reply" id="reply" role="status" hidden><svg aria-hidden="true"><use href="#i-sprig"/></svg><p id="replyText"></p></div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<noscript><p style="position:fixed;inset:auto 0 0;padding:1rem;text-align:center;background:#F5ECE0">الجواب ده محتاج JavaScript يكون شغّال عشان يتفتح.</p></noscript>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ---------- helpers ---------- */
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const mqReduce = matchMedia("(prefers-reduced-motion: reduce)");
+  const reduced = () => mqReduce.matches;
+  const EASE_OUT = "cubic-bezier(.22,1,.36,1)";
+  const EASE_IO = "cubic-bezier(.65,0,.35,1)";
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const toAr = (n) => String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+  const names = (s) => String(s).replace(/\{her\}/g, CONFIG.names.her).replace(/\{him\}/g, CONFIG.names.him);
+  const T = (path) => names(path.split(".").reduce((o, k) => (o ? o[k] : ""), CONFIG.screens) ?? "");
+  const buzz = (p) => {
+    try {
+      const active = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+      if (navigator.vibrate && active) navigator.vibrate(p);
+    } catch (_) {}
+  };
+  const live = $("#live");
+  const say = (msg) => { live.textContent = ""; requestAnimationFrame(() => { live.textContent = msg; }); };
+
+  const state = { screen: 0, sealBroken: false, opened: new Set(), letterRead: false, busy: false };
+
+  /* ---------- content ---------- */
+  document.title = names("جواب لـ{her}");
+  $$("[data-t]").forEach((el) => { el.textContent = T(el.dataset.t); });
+  $$("[data-t-label]").forEach((el) => el.setAttribute("aria-label", T(el.dataset.tLabel)));
+  $$("[data-item]").forEach((el) => { el.textContent = names(CONFIG.items[+el.dataset.item][el.dataset.field]); });
+  $("#signName").textContent = CONFIG.names.him;
+  const body = $("#letterBody");
+  CONFIG.apology.forEach((txt) => { const p = document.createElement("p"); p.textContent = names(txt); body.appendChild(p); });
+
+  /* ---------- screens & routing ---------- */
+  const screens = { 1: $("#s1"), 2: $("#s2"), 3: $("#s3") };
+  const KINDS = {
+    envelope: {
+      out: [{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(8%) scale(.94)" }], outDur: 650,
+      in: [{ opacity: 0, transform: "translateY(24%) scale(.86) rotate(-1.5deg)" }, { opacity: 1, transform: "none" }], inDur: 950, inDelay: 160,
+    },
+    forward: {
+      out: [{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(-6%) rotate(-3deg) scale(.96)" }], outDur: 560,
+      in: [{ opacity: 0, transform: "translateY(9%) rotate(2deg) scale(.98)" }, { opacity: 1, transform: "none" }], inDur: 780, inDelay: 200,
+    },
+    back: {
+      out: [{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(9%) rotate(2deg) scale(.98)" }], outDur: 500,
+      in: [{ opacity: 0, transform: "translateY(-6%) rotate(-3deg) scale(.96)" }, { opacity: 1, transform: "none" }], inDur: 700, inDelay: 160,
+    },
+  };
+  let pendingKind = null;
+  let running = [];
+
+  const parseHash = () => { const n = parseInt(location.hash.slice(1), 10); return n >= 1 && n <= 3 ? n : 1; };
+  function go(n, kind) {
+    pendingKind = kind || null;
+    if (parseHash() === n) show(n); else location.hash = "#" + n;
+  }
+  addEventListener("hashchange", () => show(parseHash()));
+
+  function stagger(el, base) {
+    if (reduced()) return;
+    $$("[data-stagger]", el).forEach((x, i) => {
+      x.animate([{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }],
+        { duration: 600, delay: base + i * 85, easing: EASE_OUT, fill: "backwards" });
+    });
+  }
+
+  function show(n, { instant = false } = {}) {
+    if (state.screen === n) return;
+    const from = state.screen;
+    const fromEl = screens[from], toEl = screens[n];
+    const kind = pendingKind || (n > from ? "forward" : "back");
+    pendingKind = null;
+
+    running.filter((a) => a.playState === "running").forEach((a) => a.finish());
+    running = [];
+    if (from === 3) finishLetter();
+
+    state.screen = n;
+    beforeEnter(n);
+    Object.entries(screens).forEach(([k, el]) => {
+      const on = +k === n;
+      el.classList.toggle("is-active", on);
+      el.inert = !on;
+      el.setAttribute("aria-hidden", String(!on));
+    });
+    toEl.scrollTop = 0;
+
+    if (instant || !fromEl || reduced()) {
+      if (fromEl) { fromEl.classList.remove("is-leaving"); if (from === 1) resetIntroFx(); }
+      if (instant) stagger(toEl, 120);
+      afterEnter(n, !instant);
+      return;
+    }
+
+    fromEl.classList.add("is-leaving");
+    const K = KINDS[kind];
+    const a1 = $("[data-move]", fromEl).animate(K.out, { duration: K.outDur, easing: EASE_IO, fill: "forwards" });
+    const a2 = $("[data-move]", toEl).animate(K.in, { duration: K.inDur, delay: K.inDelay, easing: EASE_OUT, fill: "backwards" });
+    running = [a1, a2];
+    stagger(toEl, K.inDelay + 140);
+    a1.finished.then(() => {
+      fromEl.classList.remove("is-leaving");
+      a1.cancel();
+      if (from === 1) resetIntroFx();
+    }).catch(() => {});
+    if (n === 3) revealLetter(K.inDelay + 500);
+    a2.finished.then(() => afterEnter(n, true)).catch(() => {});
+  }
+
+  function beforeEnter(n) {
+    if (n === 1) applyEnvelope();
+    if (n === 2) renderNotes();
+    if (n === 3 && state.letterRead) setLetterDone();
+  }
+  function afterEnter(n, focus) {
+    const labels = { 1: T("intro.title"), 2: T("notes.title"), 3: T("letter.eyebrow") };
+    say(labels[n]);
+    if (focus) { const h = $(`#s${n}-title`); if (h) h.focus({ preventScroll: true }); }
+    if (n === 3 && !state.letterRead && reduced()) setLetterDone();
+    if (n === 3 && !state.letterRead && !letterAnims.length) revealLetter(300);
+  }
+
+  $$("[data-go]").forEach((b) => b.addEventListener("click", () => { buzz(6); go(+b.dataset.go, "back"); }));
+
+  /* ---------- screen 1: the seal ---------- */
+  const env = $("#env"), seal = $("#seal"), hint = $("#sealHint"), reopen = $("#reopen");
+  let introFx = [];
+
+  function applyEnvelope() {
+    env.classList.toggle("is-open", state.sealBroken);
+    seal.hidden = state.sealBroken;
+    hint.hidden = state.sealBroken;
+    reopen.hidden = !state.sealBroken;
+  }
+  function resetIntroFx() { introFx.forEach((a) => a.cancel()); introFx = []; }
+
+  function crumbs() {
+    const box = $("#crumbs");
+    for (let i = 0; i < 9; i++) {
+      const s = document.createElement("span");
+      box.appendChild(s);
+      const ang = (Math.PI * 2 * i) / 9 + Math.random() * .5;
+      const dist = 34 + Math.random() * 40;
+      const x = Math.cos(ang) * dist, y = Math.sin(ang) * dist * .6 + 30 + Math.random() * 30;
+      s.animate([
+        { transform: "translate(0,0) rotate(0) scale(1)", opacity: 1 },
+        { transform: `translate(${x}px, ${y}px) rotate(${Math.random() * 300}deg) scale(.6)`, opacity: 0 },
+      ], { duration: 700 + Math.random() * 400, easing: "cubic-bezier(.2,.6,.4,1)", fill: "forwards" })
+        .finished.then(() => s.remove()).catch(() => s.remove());
+    }
+  }
+
+  async function breakSeal() {
+    if (state.sealBroken || state.busy) return;
+    state.busy = true;
+    buzz([12, 40, 18]);
+
+    if (reduced()) {
+      state.sealBroken = true; applyEnvelope(); state.busy = false;
+      go(2, "envelope"); return;
+    }
+
+    const text = $("#introText");
+    introFx.push(
+      text.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(-10px)" }], { duration: 500, easing: EASE_IO, fill: "forwards" }),
+      hint.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: "forwards" })
+    );
+
+    seal.classList.add("is-breaking");
+    const bodyEl = $(".seal__body", seal);
+    await bodyEl.animate([{ transform: "scale(1)" }, { transform: "scale(.9)" }, { transform: "scale(1.03)" }], { duration: 280, easing: EASE_OUT }).finished;
+    $(".seal__crack", seal).animate([{ opacity: 0 }, { opacity: 1 }], { duration: 110, fill: "forwards" });
+    await wait(150);
+
+    const fall = { duration: 950, easing: "cubic-bezier(.45,0,.75,.6)", fill: "forwards" };
+    $(".seal__half--l", seal).animate([
+      { transform: "none", opacity: 1 },
+      { transform: "translate(-14%, -4%) rotate(-12deg)", opacity: 1, offset: .3 },
+      { transform: "translate(-42%, 120%) rotate(-48deg)", opacity: 0 },
+    ], fall);
+    $(".seal__half--r", seal).animate([
+      { transform: "none", opacity: 1 },
+      { transform: "translate(14%, -6%) rotate(10deg)", opacity: 1, offset: .3 },
+      { transform: "translate(46%, 130%) rotate(40deg)", opacity: 0 },
+    ], fall);
+    $(".seal__crack", seal).animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, delay: 120, fill: "forwards" });
+    crumbs();
+    buzz(10);
+    await wait(320);
+
+    const flap = $(".env__flap");
+    const fa = flap.animate([{ transform: "rotateX(0deg)" }, { transform: "rotateX(180deg)" }], { duration: 760, easing: EASE_IO, fill: "forwards" });
+    setTimeout(() => { flap.style.zIndex = "1"; }, 380);
+    await fa.finished;
+
+    const letter = $(".env__letter");
+    const la = letter.animate([{ transform: "translateY(0)" }, { transform: "translateY(-38%)" }], { duration: 760, easing: EASE_OUT, fill: "forwards" });
+    await la.finished;
+
+    state.sealBroken = true;
+    applyEnvelope();
+    fa.cancel(); la.cancel(); flap.style.zIndex = "";
+    state.busy = false;
+    await wait(120);
+    if (state.screen === 1) go(2, "envelope");
+  }
+
+  seal.addEventListener("click", breakSeal);
+  reopen.addEventListener("click", () => { buzz(6); go(2, "envelope"); });
+
+  /* ---------- screen 2: notes ---------- */
+  const noteEls = $$(".note");
+  const next = $("#next"), skip = $("#skip");
+
+  function setNote(i, open) {
+    const li = noteEls[i];
+    li.classList.toggle("is-open", open);
+    $(".note__hit", li).setAttribute("aria-expanded", String(open));
+    $(".note__back", li).setAttribute("aria-hidden", String(!open));
+  }
+  function renderNotes() {
+    noteEls.forEach((li, i) => {
+      const seen = state.opened.has(i);
+      li.classList.toggle("is-seen", seen);
+      $(".note__hint", li).textContent = seen ? T("notes.seenHint") : T("notes.openHint");
+    });
+    updateProgress(false);
+  }
+  function updateProgress(animate) {
+    const n = state.opened.size;
+    $("#countN").textContent = toAr(n);
+    $("#progressText").textContent = names(CONFIG.screens.notes.progress[n]);
+    $$(".dot").forEach((d, i) => d.classList.toggle("is-on", i < n));
+    const ready = n >= 3;
+    const wasReady = next.getAttribute("aria-disabled") !== "true";
+    next.setAttribute("aria-disabled", String(!ready));
+    $("#nextLabel").textContent = ready ? T("notes.ready") : names(CONFIG.screens.notes.locked[3 - n]);
+    skip.hidden = ready;
+    if (ready && !wasReady && animate && !reduced()) {
+      next.animate([{ transform: "scale(1)" }, { transform: "scale(1.06)" }, { transform: "scale(1)" }], { duration: 520, easing: EASE_OUT });
+    }
+  }
+  noteEls.forEach((li, i) => {
+    $(".note__hit", li).addEventListener("click", () => {
+      const open = !li.classList.contains("is-open");
+      setNote(i, open);
+      if (open) {
+        buzz(8);
+        if (!state.opened.has(i)) {
+          state.opened.add(i);
+          setTimeout(() => { li.classList.add("is-seen"); $(".note__hint", li).textContent = T("notes.seenHint"); }, reduced() ? 0 : 500);
+          updateProgress(true);
+        }
+      } else buzz(4);
+    });
+  });
+  next.addEventListener("click", () => {
+    if (next.getAttribute("aria-disabled") === "true") {
+      const i = [0, 1, 2].find((k) => !state.opened.has(k));
+      const li = noteEls[i];
+      if (!reduced()) {
+        li.animate([
+          { transform: "rotate(var(--tilt))" }, { transform: "rotate(-2.5deg) translateY(-3px)" },
+          { transform: "rotate(2deg)" }, { transform: "rotate(-1deg)" }, { transform: "rotate(var(--tilt))" },
+        ], { duration: 560, easing: EASE_OUT });
+      }
+      buzz([6, 30, 6]);
+      say(T("notes.nudge"));
+      $(".note__hit", li).focus({ preventScroll: false });
+      return;
+    }
+    buzz(10);
+    go(3, "forward");
+  });
+  skip.addEventListener("click", () => { buzz(6); go(3, "forward"); });
+
+  /* ---------- screen 3: the letter ---------- */
+  const paras = () => $$("#letterBody p");
+  const sign = $("#sign"), choices = $("#choices"), letterEl = $("#letter");
+  let letterAnims = [];
+  let scrollTimer = 0;
+
+  function setLetterDone() {
+    clearTimeout(scrollTimer);
+    letterAnims.forEach((a) => a.cancel());
+    letterAnims = [];
+    choices.inert = false;
+    state.letterRead = true;
+  }
+  function finishLetter() {
+    if (!letterAnims.length) return;
+    letterAnims.forEach((a) => { if (a.playState !== "finished") a.finish(); });
+  }
+  function revealLetter(base) {
+    if (state.letterRead || reduced()) { setLetterDone(); return; }
+    if (letterAnims.length) return;
+    choices.inert = true;
+    let t = base;
+    const add = (el, kf, dur, delay) => letterAnims.push(el.animate(kf, { duration: dur, delay, easing: EASE_OUT, fill: "backwards" }));
+    const rise = [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }];
+    add($("#s3-title"), rise, 800, Math.max(0, t - 300));
+    paras().forEach((p) => {
+      add(p, rise, 900, t);
+      const words = p.textContent.trim().split(/\s+/).length;
+      t += 520 + words * 125;
+    });
+    add(sign, rise, 800, t);
+    // once the letter is read, bring the signature and choices into view if they're below the fold
+    scrollTimer = setTimeout(() => {
+      const s3 = screens[3];
+      if (state.screen === 3 && choices.getBoundingClientRect().bottom > s3.clientHeight) {
+        s3.scrollTo({ top: s3.scrollHeight, behavior: reduced() ? "auto" : "smooth" });
+      }
+    }, t + 200);
+    letterAnims.push($("path", sign).animate([{ strokeDashoffset: 160 }, { strokeDashoffset: 0 }], { duration: 1100, delay: t + 300, easing: EASE_OUT, fill: "backwards" }));
+    t += 900;
+    $$(".choice:not([hidden])", choices).forEach((c, i) => add(c, rise, 700, t + i * 110));
+    const last = letterAnims[letterAnims.length - 1];
+    last.finished.then(() => { if (letterAnims.includes(last)) setLetterDone(); }).catch(() => {});
+  }
+  // tap the letter to show everything at once
+  letterEl.addEventListener("click", (e) => { if (!e.target.closest(".choice")) finishLetter(); });
+
+  /* talk / copy / time */
+  const reply = $("#reply"), replyText = $("#replyText");
+  const msg = names(CONFIG.whatsappMessage);
+  const number = String(CONFIG.whatsappNumber || "").replace(/\D/g, "");
+
+  function showReply(text, quote) {
+    replyText.textContent = text;
+    if (quote) { const q = document.createElement("q"); q.textContent = quote; replyText.appendChild(q); }
+    const wasHidden = reply.hidden;
+    reply.hidden = false;
+    if (!reduced()) {
+      reply.animate([{ opacity: 0, transform: wasHidden ? "translateY(10px)" : "scale(.98)" }, { opacity: 1, transform: "none" }], { duration: 520, easing: EASE_OUT });
+    }
+  }
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; }
+    catch (_) {
+      const ta = document.createElement("textarea");
+      ta.value = t; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;opacity:0;inset:0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (_) {}
+      ta.remove(); return ok;
+    }
+  }
+
+  if (number) {
+    const a = $("#talkLink");
+    a.href = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
+    a.hidden = false;
+    a.addEventListener("click", () => { buzz(10); showReply(T("letter.talkReply")); });
+  } else {
+    const b = $("#talkCopy");
+    b.hidden = false;
+    b.addEventListener("click", async () => {
+      buzz(10);
+      const ok = await copyText(msg);
+      if (ok) {
+        b.dataset.done = "true";
+        $("use", b).setAttribute("href", "#i-check");
+        $("#copyLabel").textContent = T("letter.copied");
+        showReply(T("letter.copyReply"));
+      } else {
+        showReply(T("letter.copyFail"), msg);
+      }
+    });
+  }
+  $("#timeBtn").addEventListener("click", () => { buzz(6); showReply(T("letter.timeReply")); });
+
+  /* ---------- ambient: slow gold dust ---------- */
+  (function sky() {
+    const c = $("#sky"), ctx = c.getContext("2d");
+    let w = 0, h = 0, parts = [], raf = 0;
+    const COLORS = ["#B48A4E", "#B48A4E", "#C98F86"];
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = innerWidth; h = innerHeight;
+      c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = Math.round(Math.min(28, (w * h) / 26000));
+      parts = Array.from({ length: count }, () => ({
+        x: Math.random() * w, y: Math.random() * h,
+        r: .7 + Math.random() * 1.7, vy: -(.06 + Math.random() * .2), vx: (Math.random() - .5) * .1,
+        a: .18 + Math.random() * .38, ph: Math.random() * 6.28, c: COLORS[(Math.random() * COLORS.length) | 0],
+      }));
+    }
+    function frame(t) {
+      ctx.clearRect(0, 0, w, h);
+      for (const p of parts) {
+        p.x += p.vx + Math.sin(t / 2600 + p.ph) * .07;
+        p.y += p.vy;
+        if (p.y < -8) { p.y = h + 8; p.x = Math.random() * w; }
+        ctx.globalAlpha = p.a * (.65 + .35 * Math.sin(t / 1100 + p.ph));
+        ctx.fillStyle = p.c;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    const start = () => { if (!raf && !reduced() && !document.hidden) raf = requestAnimationFrame(frame); };
+    const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+    let rt;
+    addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(resize, 150); });
+    document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+    mqReduce.addEventListener("change", () => { if (reduced()) { stop(); ctx.clearRect(0, 0, w, h); } else start(); });
+    resize(); start();
+  })();
+
+  /* ---------- boot ---------- */
+  if (!location.hash) history.replaceState(null, "", "#1");
+  const first = parseHash();
+  if (first > 1) state.sealBroken = true; // landed deep: the envelope is already open
+  show(first, { instant: true });
+})();
+</script>
+</body>
+</html>
